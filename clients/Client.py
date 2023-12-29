@@ -19,16 +19,8 @@ class Client:
         self.tId = self.tId + 1
         
     
-
     def Put(self, key: int):
-        myobj = {
-            "method": "W",
-            "key": key,
-            "value": key
-        }
-
         i = keyToShard(key,self.nShards)
-
         # mpori na thel kati prin kanw begin 
         if i not in self.participants:
             self.participants.append(i)      
@@ -36,22 +28,15 @@ class Client:
 
         gg = self.bufferClients[i].Put(self.tId, key)
         return gg
-        # x = requests(url, json=myobj)
 
     def Get(self, key: int):
-        myobj = {
-            "method": "R",
-            "key": key
-        }
         i = keyToShard(key,self.nShards)
         # mpori na theli kati prin kanw begin
         if i not in self.participants:
             self.participants.append(i)
             self.bufferClients[i].Begin(self.tId)
-
-        gg = self.bufferClients[i].Get(self.tId, key)
+        gg = self.bufferClients[i].Get(self.tId, key, closestReplica = self.closetReplica)
         return gg
-        # x = requests(url, json=myobj)
 
     def Commit(self):
         # 2PC
