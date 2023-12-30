@@ -1,42 +1,38 @@
 package com.example
 
-//#user-registry-actor
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
 import scala.collection.immutable
 
-//#user-case-classes
-final case class User(name: String, age: Int, countryOfResidence: String)
-final case class Users(users: immutable.Seq[User])
-//#user-case-classes
+final case class Pair(key: String, value: Int)
+final case class Store(users: immutable.Seq[Pair])
 
 object UserRegistry {
-  // actor protocol
   sealed trait Command
-  final case class GetUsers(replyTo: ActorRef[Users]) extends Command
-  final case class CreateUser(user: User, replyTo: ActorRef[ActionPerformed]) extends Command
-  final case class GetUser(name: String, replyTo: ActorRef[GetUserResponse]) extends Command
-  final case class DeleteUser(name: String, replyTo: ActorRef[ActionPerformed]) extends Command
+  final case class GetStore(replyTo: ActorRef[Store]) extends Command
+  final case class CreatePair(pair: Pair, replyTo: ActorRef[ActionPerformed]) extends Command
+  final case class GetPair(key: String, replyTo: ActorRef[GetUserResponse]) extends Command
+//  final case class DeleteUser(name: String, replyTo: ActorRef[ActionPerformed]) extends Command
 
-  final case class GetUserResponse(maybeUser: Option[User])
+  final case class GetUserResponse(maybePair: Option[Pair])
   final case class ActionPerformed(description: String)
 
   def apply(): Behavior[Command] = registry(Set.empty)
 
-  private def registry(users: Set[User]): Behavior[Command] =
+  private def registry(store: Set[Pair]): Behavior[Command] =
     Behaviors.receiveMessage {
-      case GetUsers(replyTo) =>
-        replyTo ! Users(users.toSeq)
+      case GetStore(replyTo) =>
+        replyTo ! Store(store.toSeq)
         Behaviors.same
-      case CreateUser(user, replyTo) =>
-        replyTo ! ActionPerformed(s"User ${user.name} created.")
-        registry(users + user)
-      case GetUser(name, replyTo) =>
-        replyTo ! GetUserResponse(users.find(_.name == name))
+      case CreatePair(pair, replyTo) =>
+        replyTo ! ActionPerformed(s"Pair ${pair.key} with value=${pair.value} created.")
+        registry(store + pair)
+      case GetPair(key, replyTo) =>
+        replyTo ! GetUserResponse(store.find(_.key == key))
         Behaviors.same
-      case DeleteUser(name, replyTo) =>
-        replyTo ! ActionPerformed(s"User $name deleted.")
-        registry(users.filterNot(_.name == name))
+//      case DeleteUser(name, replyTo) =>
+//        replyTo ! ActionPerformed(s"User $name deleted.")
+//        registry(users.filterNot(_.name == name))
     }
 }

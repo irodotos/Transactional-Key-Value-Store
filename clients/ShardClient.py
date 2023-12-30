@@ -13,10 +13,9 @@ class ShardClient:
 
     def Get(self, tId: int, closestReplica: int, key = None, txn = None, timestamp = None):
         print("GET FUNCTION WITH KEY ONLY IN SHARD CLIENT WITH ID={} AND tId={}".format(self.id, tId))
-        server = self.servers[closestReplica]
-        result = self.invokeUnlogged(server, tId, key)
-        promise = Promise(REPLY.REPLY_OK , result.text)
-        return promise
+        serverIp = self.servers[closestReplica]
+        result = self.invokeUnlogged(serverIp, tId, key)
+        return result
 
     def Put(self, tId: int, key):
         print("PUT FUNCTION IN SHARD CLIENT WITH ID={} AND tId={}".format(self.id, tId))
@@ -40,10 +39,18 @@ class ShardClient:
     def GetTimeout(self):
         return
     
-    def invokeUnlogged(self, server, tId, key):
-        x = requests.get(server + '/users')
-        print(x.text)
-        return x
+    def invokeUnlogged(self, serverIp, tId, key):
+        try:
+            result = requests.get(serverIp + '/store/' + str(key))
+            print(result.text)
+            if result.status_code == 200:
+                return Promise(REPLY.REPLY_OK , result.text)
+            else:
+                return Promise(REPLY.REPLY_FAIL , "NULL")
+        except Exception as e:  
+            print("Server error {}".format(e))
+            return Promise(REPLY.REPLY_FAIL , "NULL")
+            
 
 def readConfigFile():
     try:

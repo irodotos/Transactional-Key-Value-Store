@@ -10,8 +10,11 @@ def main():
     # x = requests.get('http://localhost:8081/users')
     # print(x.text)
 
-    # x = requests.get('http://localhost:8082/users')
-    # print(x.text)
+    # try:
+    #     x = requests.get('http://localhost:8082/users')
+    #     print(x.text)
+    # except Exception as e:
+    #     print("Server error {}".format(e))
     
     duration = int(sys.argv[1])
     tlen = int(sys.argv[2])
