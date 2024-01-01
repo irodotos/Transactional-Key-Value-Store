@@ -4,8 +4,8 @@ class Transaction:
 
     def __init__(self, tId):
         self.tId = tId
-        self.readSet = {}
-        self.writeSet = {}
+        self.readSet = {}  # key: timestamp
+        self.writeSet = {} # key: value
 
     def addReadSet(self, key, timestamp):
         self.readSet[key] = timestamp

@@ -2,8 +2,9 @@ import string
 import requests
 from ShardClient import *
 from BufferClient import *
+from datetime import datetime
 
-url = 'http://localhost:8000'
+COMMIT_RETRIES = 5
 
 class Client:
     def __init__(self, configPath: str, nShards: int, closetReplica: int):
@@ -17,6 +18,7 @@ class Client:
 
     def Begin(self):
         self.tId = self.tId + 1
+        self.participants.clear()
         
     
     def Put(self, key: int):
@@ -40,49 +42,58 @@ class Client:
 
     def Commit(self):
         # 2PC
-        # Timestamp timestamp(timeServer.GetTime(), client_id);
-        # int status;
+        timestamp = datetime.now()
+        for i in range(COMMIT_RETRIES):
+            status = self.Prepare(timestamp)
+            if status == REPLY.REPLY_RETRY:
+                continue
+            else:
+                break
 
-        # for (retries = 0; retries < COMMIT_RETRIES; retries++) {
-        #     status = Prepare(timestamp);
-        #     if (status == REPLY_RETRY) {
-        #         continue;
-        #     } else {
-        #         break;
-        #     }
-        # }
+        if status == REPLY.REPLY_OK:
+            print("COMMIT [{}]".format(self.tId))
+            for p in self.participants:
+                self.bufferClients[p].Commit(self.tId, timestamp) #timestamp = 0 ??
+            return True
 
-        # if (status == REPLY_OK) {
-        #     Debug("COMMIT [%lu]", t_id);
-            
-        #     for (auto p : participants) {
-        #         bclient[p]->Commit(0);
-        #     }
-        #     return true;
-        # }
-
-        # // 4. If not, send abort to all shards.
-        # Abort();
-        # return false;
-        return
+        # 4. If not, send abort to all shards.
+        self.Abort()
+        return False
     
     def Prepare(self, timestamp):
-        # // 1. Send commit-prepare to all shards.
-        # uint64_t proposed = 0;
-        # list<Promise *> promises;
+        # 1. Send commit-prepare to all shards.
+        proposed = 0
+        promises = []
+        
+        print("PREPARE [{}] at {}".format(self.tId, timestamp))
+        assert len(self.participants) > 0, "Participants size must be greater than 0"
 
-        # Debug("PREPARE [%lu] at %lu", t_id, timestamp.getTimestamp());
-        # ASSERT(participants.size() > 0);
+        for p in self.participants:
+            promises.append(self.bufferClients[p].Prepare(self.tId, timestamp))
 
-        # for (auto p : participants) {
-        #     promises.push_back(new Promise(PREPARE_TIMEOUT));
-        #     bclient[p]->Prepare(timestamp, promises.back());
-        # }
-
-        # int status = REPLY_OK;
-        # uint64_t ts;
-        # // 3. If all votes YES, send commit to all shards.
-        # // If any abort, then abort. Collect any retry timestamps.
+        status = REPLY.REPLY_OK 
+        #  3. If all votes YES, send commit to all shards.
+        #  If any abort, then abort. Collect any retry timestamps.
+        for p in promises:
+            proposed = p.timestamp
+            if p.reply == REPLY.REPLY_OK:
+                print("PREPARE [{}] OK".format(self.tId))
+                continue
+            elif p.reply == REPLY.REPLY_FAIL:
+                print("PREPARE [{}] ABORT".format(self.tId))
+                return REPLY.REPLY_FAIL
+            elif p.reply == REPLY.REPLY_RETRY:
+                status = REPLY.REPLY_RETRY
+                if proposed > timestamp:
+                    timestamp = proposed
+                break
+            elif p.reply == REPLY.REPLY_TIMEOUT:
+                status = REPLY.REPLY_RETRY
+                break
+            elif p.reply == REPLY.REPLY_ABSTAIN:
+                continue
+            else:
+                continue
         # for (auto p : promises) {
         #     uint64_t proposed = p->GetTimestamp().getTimestamp();
 

@@ -12,20 +12,16 @@ class BufferClient:
 
     def Get(self, tId: int, key: int, closestReplica: int):
     # // Read your own writes, check the write set first. return
-    # // Consistent reads, check the read set. return
         if self.transaction.getWriteSet(key) is not None:
             return Promise(REPLY.REPLY_OK, self.transaction.getWriteSet(key))
-
-        # if self.transaction.getReadSet.get(key) is not None:
-        #     return self.transaction.getReadSet[key]     
-
+    
         promise = self.shardClient.Get(tId, closestReplica, key)
         if(promise.reply == REPLY.REPLY_OK):
             self.transaction.addReadSet(key, promise.value) #value = timestamp
         
     def Put(self, tId, key):
         self.transaction.addWriteSet(key, key)
-        print("PUT FUNCTION IN SHARD CLIENT WITH ID={} AND tId={}".format(self.shardClient.id, tId))
+        print("PUT FUNCTION IN BUFFER CLIENT CLIENT WITH ID={} AND tId={}".format(self.shardClient.id, tId))
         return Promise(REPLY.REPLY_OK, -1)
 
     def Prepare(self, tId, key):

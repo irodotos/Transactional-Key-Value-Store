@@ -6,10 +6,16 @@ class ShardClient:
     def __init__(self, id: int):
         self.id = id
         self.servers = readConfigFile()
+        self.blockingBegin = False
     
     def Begin(self, tId: int):
         print("BEGIN FUNCTION IN SHARD CLIENT WITH ID={} AND tId={}".format(self.id, tId))
-        # wait until any previus txn have finished
+        # wait until any previus txn that is on commit have finished  NEEDED?
+        # if (blockingBegin != NULL) {
+        #     blockingBegin->GetReply();
+        #     delete blockingBegin;
+        #     blockingBegin = NULL;
+        # }
 
     def Get(self, tId: int, closestReplica: int, key = None, txn = None, timestamp = None):
         print("GET FUNCTION WITH KEY ONLY IN SHARD CLIENT WITH ID={} AND tId={}".format(self.id, tId))
@@ -41,7 +47,7 @@ class ShardClient:
     
     def invokeUnlogged(self, serverIp, tId, key):
         try:
-            result = requests.get(serverIp + '/store/' + str(key))
+            result = requests.get(serverIp + '/store')
             print(result.text)
             if result.status_code == 200:
                 return Promise(REPLY.REPLY_OK , result.text)

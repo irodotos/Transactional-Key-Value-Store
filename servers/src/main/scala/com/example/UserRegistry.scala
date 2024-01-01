@@ -6,7 +6,7 @@ import akka.actor.typed.scaladsl.Behaviors
 import scala.collection.immutable
 
 final case class Pair(key: String, value: Int)
-final case class Store(users: immutable.Seq[Pair])
+final case class Store(pairs: immutable.Seq[Pair])
 
 object UserRegistry {
   sealed trait Command
