@@ -1,6 +1,7 @@
 from Transaction import *
 from Promise import *
 from ShardClient import ShardClient
+from datetime import datetime
 
 class BufferClient:
     def __init__(self, shardClient: ShardClient):
@@ -13,7 +14,7 @@ class BufferClient:
     def Get(self, tId: int, key: int, closestReplica: int):
     # // Read your own writes, check the write set first. return
         if self.transaction.getWriteSet(key) is not None:
-            return Promise(REPLY.REPLY_OK, self.transaction.getWriteSet(key))
+            return Promise(REPLY.REPLY_OK, self.transaction.getWriteSet(key), datetime.now())
     
         promise = self.shardClient.Get(tId, closestReplica, key)
         if(promise.reply == REPLY.REPLY_OK):
@@ -22,9 +23,10 @@ class BufferClient:
     def Put(self, tId, key):
         self.transaction.addWriteSet(key, key)
         print("PUT FUNCTION IN BUFFER CLIENT CLIENT WITH ID={} AND tId={}".format(self.shardClient.id, tId))
-        return Promise(REPLY.REPLY_OK, -1)
+        return Promise(REPLY.REPLY_OK, -1, datetime.now())
 
     def Prepare(self, tId, key):
+        print("PREPARE FUNCTION IN BUFFER CLIENT CLIENT WITH ID={} AND tId={}".format(self.shardClient.id, tId))
         return self.shardClient.Prepare(tId, key)
 
     def Commit(self, tId, key):

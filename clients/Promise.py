@@ -1,4 +1,5 @@
 from enum import Enum
+
 class REPLY(Enum):
     REPLY_OK = 1, 
     REPLY_FAIL = 2,
@@ -8,6 +9,7 @@ class REPLY(Enum):
 
 class Promise:
 
-    def __init__(self, reply, value):
+    def __init__(self, reply, value, timestamp):
         self.reply = reply
         self.value = value
+        self.timestamp = timestamp

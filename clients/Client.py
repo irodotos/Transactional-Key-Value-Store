@@ -69,7 +69,7 @@ class Client:
         assert len(self.participants) > 0, "Participants size must be greater than 0"
 
         for p in self.participants:
-            promises.append(self.bufferClients[p].Prepare(self.tId, timestamp))
+            promises.append(self.bufferClients[p].Prepare(self.tId, timestamp))  #pithanon lathos edw
 
         status = REPLY.REPLY_OK 
         #  3. If all votes YES, send commit to all shards.
@@ -94,53 +94,21 @@ class Client:
                 continue
             else:
                 continue
-        # for (auto p : promises) {
-        #     uint64_t proposed = p->GetTimestamp().getTimestamp();
+        
+        if status == REPLY.REPLY_RETRY:
+            now = datetime.now()
+            if now > proposed:
+                timestamp = now
+            else:
+                timestamp = proposed
+            print("RETRY [{}] at [{}]".format(self.tId, timestamp))
 
-        #     switch(p->GetReply()) {
-        #     case REPLY_OK:
-        #         Debug("PREPARE [%lu] OK", t_id);
-        #         continue;
-        #     case REPLY_FAIL:
-        #         // abort!
-        #         Debug("PREPARE [%lu] ABORT", t_id);
-        #         return REPLY_FAIL;
-        #     case REPLY_RETRY:
-        #         status = REPLY_RETRY;
-        #             if (proposed > ts) {
-        #                 ts = proposed;
-        #             }
-        #             break;
-        #     case REPLY_TIMEOUT:
-        #         status = REPLY_RETRY;
-        #         break;
-        #     case REPLY_ABSTAIN:
-        #         // just ignore abstains
-        #         break;
-        #     default:
-        #         break;
-        #     }
-        #     delete p;
-        # }
-
-        # if (status == REPLY_RETRY) {
-        #     uint64_t now = timeServer.GetTime();
-        #     if (now > proposed) {
-        #         timestamp.setTimestamp(now);
-        #     } else {
-        #         timestamp.setTimestamp(proposed);
-        #     }
-        #     Debug("RETRY [%lu] at [%lu]", t_id, timestamp.getTimestamp());
-        # }
-
-        # Debug("All PREPARE's [%lu] received", t_id);
-        # return status;
-        return
+        print("all PREPARE's [{}] received".format(self.tId))
+        return status
     
     def  Abort(self):
-        # for (auto p : participants) {
-        #     bclient[p]->Abort();
-        # }
+        for p in self.participants:
+            self.bufferClients[p].Abort(self.tId)
         return
 
 def keyToShard(key, nShards):

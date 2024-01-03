@@ -1,6 +1,6 @@
 from Promise import *
 import requests 
-import threading
+from datetime import datetime
 class ShardClient:
 
     def __init__(self, id: int):
@@ -29,6 +29,7 @@ class ShardClient:
     
     def Prepare(self, tId: int, txn = None, timestamp = None):
         print("PREPARE FUNCTION IN SHARD CLIENT WITH ID={} AND tId={}".format(self.id, tId))
+        return Promise(REPLY.REPLY_OK , "NULL", datetime.now())
         # invokeConsensus
     
     def Commit(self, tId: int, txn = None, timestamp = None):
@@ -50,12 +51,24 @@ class ShardClient:
             result = requests.get(serverIp + '/store')
             print(result.text)
             if result.status_code == 200:
-                return Promise(REPLY.REPLY_OK , result.text)
+                return Promise(REPLY.REPLY_OK , result.text, datetime.now())
             else:
-                return Promise(REPLY.REPLY_FAIL , "NULL")
+                return Promise(REPLY.REPLY_FAIL , "NULL", datetime.now())
         except Exception as e:  
             print("Server error {}".format(e))
-            return Promise(REPLY.REPLY_FAIL , "NULL")
+            return Promise(REPLY.REPLY_FAIL , "NULL", datetime.now())
+    
+    def invokeConsensus(self, serverIp, tId, key):
+        try:
+            result = requests.get(serverIp + '/consensus')
+            print(result.text)
+            if result.status_code == 200:
+                return Promise(REPLY.REPLY_OK , result.text, datetime.now())
+            else:
+                return Promise(REPLY.REPLY_FAIL , "NULL", datetime.now())
+        except Exception as e:  
+            print("Server error {}".format(e))
+            return Promise(REPLY.REPLY_FAIL , "NULL", datetime.now())
             
 
 def readConfigFile():
