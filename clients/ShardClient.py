@@ -1,11 +1,12 @@
 from Promise import *
 import requests 
 from datetime import datetime
+import json
 class ShardClient:
 
     def __init__(self, id: int):
         self.id = id
-        self.servers = readConfigFile()
+        self.servers = readConfigFile(id)
         self.blockingBegin = False
     
     def Begin(self, tId: int):
@@ -27,12 +28,18 @@ class ShardClient:
         print("PUT FUNCTION IN SHARD CLIENT WITH ID={} AND tId={}".format(self.id, tId))
         # unimplemented => DONT NEED IT BEACUSE I WRITE EVERY PUT IN writeSet
     
-    def Prepare(self, tId: int, txn = None, timestamp = None):
+    def Prepare(self, tId: int, key: str, txn = None, timestamp = None):
         print("PREPARE FUNCTION IN SHARD CLIENT WITH ID={} AND tId={}".format(self.id, tId))
-        return Promise(REPLY.REPLY_OK , "NULL", datetime.now())
         # invokeConsensus
+        for serverIp in self.servers:
+            result = self.invokeConsensus(serverIp, tId, key)
+
+        if result == True:
+            return Promise(REPLY.REPLY_OK , "NULL", datetime.now())
+        else:
+            return Promise(REPLY.REPLY_FAIL , "NULL", datetime.now())
     
-    def Commit(self, tId: int, txn = None, timestamp = None):
+    def Commit(self, tId: int, key: str, txn = None, timestamp = None):
         print("COMMIT FUNCTION IN SHARD CLIENT WITH ID={} AND tId={}".format(self.id, tId))
         # invokeInconsistent
 
@@ -60,20 +67,18 @@ class ShardClient:
     
     def invokeConsensus(self, serverIp, tId, key):
         try:
-            result = requests.get(serverIp + '/consensus')
-            print(result.text)
-            if result.status_code == 200:
-                return Promise(REPLY.REPLY_OK , result.text, datetime.now())
-            else:
-                return Promise(REPLY.REPLY_FAIL , "NULL", datetime.now())
+            respone = requests.get(url=serverIp + '/store/consensus/' + str(key), json={"tId": tId})
+            result = json.loads(respone.text)["response"]
+            print("result of consensus: ", result)
+            return result
         except Exception as e:  
             print("Server error {}".format(e))
-            return Promise(REPLY.REPLY_FAIL , "NULL", datetime.now())
+            return False
             
 
-def readConfigFile():
+def readConfigFile(id: int):
     try:
-        with open("config", 'r') as file:
+        with open("shard{}.config".format(id), 'r') as file:
             lines = file.readlines()
         file.close()
         return lines

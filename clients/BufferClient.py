@@ -32,5 +32,5 @@ class BufferClient:
     def Commit(self, tId, key):
         return self.shardClient.Commit(tId, key)
     
-    def Abort(self, tId, key):
-        return self.shardClient.Abort(tId, key)
+    def Abort(self, tId):
+        return self.shardClient.Abort(tId)

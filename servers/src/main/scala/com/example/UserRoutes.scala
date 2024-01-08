@@ -1,32 +1,31 @@
 package com.example
 
-import akka.http.scaladsl.server.Directives._
+import akka.actor.typed.{ActorRef, ActorSystem}
+import akka.actor.typed.scaladsl.AskPattern._
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
+import akka.util.Timeout
+import com.example.UserRegistry._
 
 import scala.concurrent.Future
-import com.example.UserRegistry._
-import akka.actor.typed.ActorRef
-import akka.actor.typed.ActorSystem
-import akka.actor.typed.scaladsl.AskPattern._
-import akka.util.Timeout
 
 class UserRoutes(userRegistry: ActorRef[UserRegistry.Command])(implicit val system: ActorSystem[_]) {
 
-  import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
   import JsonFormats._
+  import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 
   // If ask takes more time than this to complete the request is failed
   private implicit val timeout: Timeout = Timeout.create(system.settings.config.getDuration("my-app.routes.ask-timeout"))
 
-  def getStore(): Future[Store] =
+  private def getStore(): Future[Store] =
     userRegistry.ask(GetStore.apply)
-  def getPair(key: String): Future[GetUserResponse] =
+  private def getPair(key: String): Future[GetUserResponse] =
     userRegistry.ask(GetPair(key, _))
-  def createPair(pair: Pair): Future[ActionPerformed] =
+  private def createPair(pair: Pair): Future[ActionPerformed] =
     userRegistry.ask(CreatePair(pair, _))
-//  def deleteUser(name: String): Future[ActionPerformed] =
-//    userRegistry.ask(DeleteUser(name, _))
+  private def invokeConsensus(key: String): Future[GetConsensusResponse] =
+    userRegistry.ask(InvokeConsensus(key, _))
 
   val userRoutes: Route =
     pathPrefix("store") {
@@ -54,13 +53,26 @@ class UserRoutes(userRegistry: ActorRef[UserRegistry.Command])(implicit val syst
                 }
               }
             }
-//            delete {
-//              //#users-delete-logic
-//              onSuccess(deleteUser(name)) { performed =>
-//                complete((StatusCodes.OK, performed))
+          )
+        },
+        path("consensus" / Segment) { key =>
+          concat(
+            get {
+              rejectEmptyResponse {
+                onSuccess(invokeConsensus(key)) { response =>
+                  complete(response)
+                }
+              }
+            },
+//            post{
+//              entity(as[Txn]) { txn =>
+//                onSuccess(invokeConsensus(txn)) { response =>
+//                  complete(response)
+//                }
 //              }
 //            }
           )
-        })
+        }
+      )
     }
 }
