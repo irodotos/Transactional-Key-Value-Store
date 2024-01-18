@@ -2,6 +2,7 @@ from Promise import *
 import requests 
 from datetime import datetime
 import json
+from Transaction import *
 class ShardClient:
 
     def __init__(self, id: int):
@@ -28,11 +29,11 @@ class ShardClient:
         print("PUT FUNCTION IN SHARD CLIENT WITH ID={} AND tId={}".format(self.id, tId))
         # unimplemented => DONT NEED IT BEACUSE I WRITE EVERY PUT IN writeSet
     
-    def Prepare(self, tId: int, key: str, txn = None, timestamp = None):
+    def Prepare(self, tId: int, txn: Transaction = None, timestamp = None):
         print("PREPARE FUNCTION IN SHARD CLIENT WITH ID={} AND tId={}".format(self.id, tId))
         # invokeConsensus
         for serverIp in self.servers:
-            result = self.invokeConsensus(serverIp, tId, key)
+            result = self.invokeConsensus(serverIp, tId, txn = txn)
 
         if result == True:
             return Promise(REPLY.REPLY_OK , "NULL", datetime.now())
@@ -55,8 +56,8 @@ class ShardClient:
     
     def invokeUnlogged(self, serverIp, tId, key):
         try:
-            result = requests.get(serverIp + '/store')
-            print(result.text)
+            result = requests.get(serverIp + '/store/get/'  + str(key))
+            print("invokeUNloged result = ", result.text)
             if result.status_code == 200:
                 return Promise(REPLY.REPLY_OK , result.text, datetime.now())
             else:
@@ -65,9 +66,12 @@ class ShardClient:
             print("Server error {}".format(e))
             return Promise(REPLY.REPLY_FAIL , "NULL", datetime.now())
     
-    def invokeConsensus(self, serverIp, tId, key):
+    def invokeConsensus(self, serverIp, tId, txn: Transaction = None):
         try:
-            respone = requests.get(url=serverIp + '/store/consensus/' + str(key), json={"tId": tId})
+            jsonRequest = json.dumps(txn.toJson())
+            print("invokeConsensus json: ", jsonRequest)
+            print("invokeConsensus json type : ", type(jsonRequest))
+            respone = requests.get(url=serverIp + '/store/consensus', json=jsonRequest)
             result = json.loads(respone.text)["response"]
             print("result of consensus: ", result)
             return result

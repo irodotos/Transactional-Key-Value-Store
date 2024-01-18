@@ -20,12 +20,12 @@ class UserRoutes(userRegistry: ActorRef[UserRegistry.Command])(implicit val syst
 
   private def getStore(): Future[Store] =
     userRegistry.ask(GetStore.apply)
-  private def getPair(key: String): Future[GetUserResponse] =
+  private def getPair(key: Int): Future[GetUserResponse] =
     userRegistry.ask(GetPair(key, _))
-  private def createPair(pair: Pair): Future[ActionPerformed] =
-    userRegistry.ask(CreatePair(pair, _))
-  private def invokeConsensus(key: String): Future[GetConsensusResponse] =
-    userRegistry.ask(InvokeConsensus(key, _))
+  private def createPair(key:Int, pair: Pair): Future[ActionPerformed] =
+    userRegistry.ask(CreatePair(key, pair, _))
+  private def invokeConsensus(txn: Txn): Future[GetConsensusResponse] =
+    userRegistry.ask(InvokeConsensus(txn, _))
 
   val userRoutes: Route =
     pathPrefix("store") {
@@ -35,17 +35,18 @@ class UserRoutes(userRegistry: ActorRef[UserRegistry.Command])(implicit val syst
             get {
               complete(getStore())
             },
-            post {
-              entity(as[Pair]) { pair =>
-                onSuccess(createPair(pair)) { performed =>
-                  complete((StatusCodes.Created, performed))
+            path(Segment) { key =>
+              post {
+                entity(as[Pair]) { pair =>
+                  onSuccess(createPair(key.toInt, pair)) { performed =>
+                    complete((StatusCodes.Created, performed))
+                  }
                 }
               }
             }
           )
         },
-        path(Segment) { key =>
-          concat(
+        path("get" / IntNumber)  { key =>
             get {
               rejectEmptyResponse {
                 onSuccess(getPair(key)) { response =>
@@ -53,25 +54,15 @@ class UserRoutes(userRegistry: ActorRef[UserRegistry.Command])(implicit val syst
                 }
               }
             }
-          )
         },
-        path("consensus" / Segment) { key =>
-          concat(
+        path("consensus"){
             get {
-              rejectEmptyResponse {
-                onSuccess(invokeConsensus(key)) { response =>
+              entity(as[Txn]) { txn =>
+                onSuccess(invokeConsensus(txn)) { response =>
                   complete(response)
                 }
               }
-            },
-//            post{
-//              entity(as[Txn]) { txn =>
-//                onSuccess(invokeConsensus(txn)) { response =>
-//                  complete(response)
-//                }
-//              }
-//            }
-          )
+            }
         }
       )
     }
