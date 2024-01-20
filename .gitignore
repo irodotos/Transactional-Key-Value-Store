@@ -3,3 +3,5 @@ tapir
 .idea
 target/
 .bsp
+.metals/
+.vscode/
