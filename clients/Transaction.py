@@ -20,12 +20,14 @@ class Transaction:
         return self.writeSet.get(key)
     
     def toJson(self):
+        list = []
         txn = {}
         for key in self.writeSet:
-            txn[key] = self.getWriteSet(key)
+            list.append({"method": "post", "key":key, "value":self.getWriteSet(key)})
         for key in self.readSet:
-            txn[key] = self.getReadSet(key)
-        print("toJson txn = ", txn)
+            list.append({"method": "get", "key":key, "value":self.getReadSet(key)})
+        txn["txn"] = list
+        print("txn = ", txn)
         return txn
 
     

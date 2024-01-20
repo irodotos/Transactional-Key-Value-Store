@@ -3,9 +3,20 @@ import random
 from Client import *
 import requests 
 def main():
-
-    # x = requests.get('http://localhost:8080/users')
-    # print(x.text)
+    # headers = {
+    #     "Content-Type": "application/json",
+    #     "Accept": "application/json"
+    # }
+    # myJson = json.dumps({
+    #         "txn": [
+    #             {"key": 1, "value": 100},
+    #             {"key": 2, "value": 200},
+    #             {"key": 2, "value": 300}
+    #         ]
+    #     })
+    # print("json = ", myJson)
+    # x = requests.post('http://localhost:8080/store/consensus', data=myJson,  allow_redirects=False, headers=headers)
+    # print("text = ", x.text)
 
     # x = requests.get('http://localhost:8081/users')
     # print(x.text)

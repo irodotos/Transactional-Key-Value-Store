@@ -43,10 +43,14 @@ class ShardClient:
     def Commit(self, tId: int, key: str, txn = None, timestamp = None):
         print("COMMIT FUNCTION IN SHARD CLIENT WITH ID={} AND tId={}".format(self.id, tId))
         # invokeInconsistent
+        for serverIp in self.servers:
+            result = self.invokeInconsistentCommit(serverIp, tId, txn = txn)
 
     def Abort(self, tId: int, txn = None, timestamp = None):
         print("ABORT FUNCTION IN SHARD CLIENT WITH ID={} AND tId={}".format(self.id, tId))
         # invokeInconsistent
+        for serverIp in self.servers:
+            result = self.invokeInconsistentAbort(serverIp, tId, txn = txn)
     
     def TapirDecide(self, results = None):
         return
@@ -59,7 +63,7 @@ class ShardClient:
             result = requests.get(serverIp + '/store/get/'  + str(key))
             print("invokeUNloged result = ", result.text)
             if result.status_code == 200:
-                return Promise(REPLY.REPLY_OK , result.text, datetime.now())
+                return Promise(REPLY.REPLY_OK , json.loads(result.text)['value'], datetime.now())
             else:
                 return Promise(REPLY.REPLY_FAIL , "NULL", datetime.now())
         except Exception as e:  
@@ -68,17 +72,48 @@ class ShardClient:
     
     def invokeConsensus(self, serverIp, tId, txn: Transaction = None):
         try:
-            jsonRequest = json.dumps(txn.toJson())
-            print("invokeConsensus json: ", jsonRequest)
-            print("invokeConsensus json type : ", type(jsonRequest))
-            respone = requests.get(url=serverIp + '/store/consensus', json=jsonRequest)
+            headers = {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+            myData = json.dumps(txn.toJson())
+            respone = requests.post(url=serverIp + '/store/consensus', data=myData,  allow_redirects=False, headers=headers)
             result = json.loads(respone.text)["response"]
             print("result of consensus: ", result)
             return result
         except Exception as e:  
             print("Server error {}".format(e))
             return False
-            
+    
+    def invokeInconsistentCommit(self, serverIp, tId, txn: Transaction = None):
+        try:
+            headers = {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+            myData = json.dumps(txn.toJson())
+            respone = requests.post(url=serverIp + '/store/inconsistent/commit', data=myData,  allow_redirects=False, headers=headers)
+            result = json.loads(respone.text)["response"]
+            print("result of inconsistent: ", result)
+            return result
+        except Exception as e:  
+            print("Server error {}".format(e))
+            return False
+    
+    def invokeInconsistentAbort(self, serverIp, tId, txn: Transaction = None):
+        try:
+            headers = {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+            myData = json.dumps(txn.toJson())
+            respone = requests.post(url=serverIp + '/store/inconsistent/abort', data=myData,  allow_redirects=False, headers=headers)
+            result = json.loads(respone.text)["response"]
+            print("result of inconsistent: ", result)
+            return result
+        except Exception as e:  
+            print("Server error {}".format(e))
+            return False
 
 def readConfigFile(id: int):
     try:

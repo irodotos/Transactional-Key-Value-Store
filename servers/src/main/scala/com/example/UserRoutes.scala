@@ -9,6 +9,8 @@ import akka.util.Timeout
 import com.example.UserRegistry._
 
 import scala.concurrent.Future
+import scala.util.{Failure, Success}
+
 
 class UserRoutes(userRegistry: ActorRef[UserRegistry.Command])(implicit val system: ActorSystem[_]) {
 
@@ -26,44 +28,52 @@ class UserRoutes(userRegistry: ActorRef[UserRegistry.Command])(implicit val syst
     userRegistry.ask(CreatePair(key, pair, _))
   private def invokeConsensus(txn: Txn): Future[GetConsensusResponse] =
     userRegistry.ask(InvokeConsensus(txn, _))
+  private def invokeInconsistenCommit(txn: Txn): Future[Unit] =
+    userRegistry.ask(InvokeInconsistenCommit(txn, _))
+  private def invokeInconsistenAbort(txn: Txn): Future[Unit] =
+    userRegistry.ask(InvokeInconsistenAbort(txn, _))
 
   val userRoutes: Route =
     pathPrefix("store") {
       concat(
-        pathEnd {
-          concat(
-            get {
-              complete(getStore())
-            },
-            path(Segment) { key =>
-              post {
-                entity(as[Pair]) { pair =>
-                  onSuccess(createPair(key.toInt, pair)) { performed =>
-                    complete((StatusCodes.Created, performed))
-                  }
-                }
-              }
-            }
-          )
-        },
         path("get" / IntNumber)  { key =>
             get {
-              rejectEmptyResponse {
-                onSuccess(getPair(key)) { response =>
-                  complete(response.maybePair)
+                onComplete(getPair(key)) {
+                  case Success(res) => complete(res.maybePair)
+                  case Failure(ex)  => complete(StatusCodes.InternalServerError)
                 }
-              }
             }
         },
         path("consensus"){
-            get {
+            post {
               entity(as[Txn]) { txn =>
-                onSuccess(invokeConsensus(txn)) { response =>
-                  complete(response)
+                onComplete(invokeConsensus(txn)){
+                  case Success(res) => complete(res)
+                  case Failure(ex)  => complete(StatusCodes.InternalServerError)
                 }
               }
             }
         }
+//        path("inconsistent/commit"){
+//          post {
+//            entity(as[Txn]) { txn =>
+//              onComplete(invokeInconsistenCommit(txn)){
+//                case Success(res) => complete(res)
+//                case Failure(ex)  => complete(StatusCodes.InternalServerError)
+//              }
+//            }
+//          }
+//        },
+//        path("inconsistent/abort"){
+//          post {
+//            entity(as[Txn]) { txn =>
+//              onComplete(invokeInconsistenAbort(txn)){
+//                case Success(res) => complete(res)
+//                case Failure(ex)  => complete(StatusCodes.InternalServerError)
+//              }
+//            }
+//          }
+//        }
       )
     }
 }

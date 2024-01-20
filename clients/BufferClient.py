@@ -26,7 +26,7 @@ class BufferClient:
         return Promise(REPLY.REPLY_OK, -1, datetime.now())
 
     def Prepare(self, tId, timestamp):
-        print("PREPARE FUNCTION IN BUFFER CLIENT CLIENT WITH ID={} AND tId={}".format(self.shardClient.id, tId))
+        # print("PREPARE FUNCTION IN BUFFER CLIENT CLIENT WITH ID={} AND tId={}".format(self.shardClient.id, tId))
         return self.shardClient.Prepare(tId, timestamp = timestamp, txn = self.transaction)
 
     def Commit(self, tId, key):

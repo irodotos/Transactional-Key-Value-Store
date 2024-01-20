@@ -19,6 +19,6 @@ object JsonFormats  {
   implicit val storeJsonFormat: RootJsonFormat[Store] = jsonFormat1(Store.apply)
   implicit val booleanJsonFormat: RootJsonFormat[GetConsensusResponse] = jsonFormat1(GetConsensusResponse.apply)
   implicit val actionPerformedJsonFormat: RootJsonFormat[ActionPerformed]  = jsonFormat1(ActionPerformed.apply)
-  implicit val keyValueJsonFormat: RootJsonFormat[KeyValue] = jsonFormat2(KeyValue.apply)
+  implicit val keyValueJsonFormat: RootJsonFormat[KeyValue] = jsonFormat3(KeyValue.apply)
   implicit val txnJsonFormat: RootJsonFormat[Txn] = jsonFormat1(Txn.apply)
 }
