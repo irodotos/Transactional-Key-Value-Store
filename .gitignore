@@ -4,3 +4,4 @@ tapir
 target/
 .bsp
 .metals/
+.vscode/
