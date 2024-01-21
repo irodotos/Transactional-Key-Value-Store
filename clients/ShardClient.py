@@ -45,13 +45,16 @@ class ShardClient:
         # invokeInconsistent
         for serverIp in self.servers:
             result = self.invokeInconsistentCommit(serverIp, tId, txn = txn)
+        return Promise(REPLY.REPLY_OK , "NULL", datetime.now())
+        
 
     def Abort(self, tId: int, txn: Transaction = None, timestamp = None):
         print("ABORT FUNCTION IN SHARD CLIENT WITH ID={} AND tId={}".format(self.id, tId))
         # invokeInconsistent
         for serverIp in self.servers:
             result = self.invokeInconsistentAbort(serverIp, tId, txn = txn)
-    
+        return Promise(REPLY.REPLY_FAIL , "NULL", datetime.now())
+
     def TapirDecide(self, results = None):
         return
 
@@ -105,6 +108,7 @@ class ShardClient:
                 "Content-Type": "application/json"
             }
             myData = json.dumps(txn.toJson())
+            print("myData = ", myData)
             respone = requests.post(url=serverIp + '/store/inconsistent/abort', data=myData,  allow_redirects=False, headers=headers)
             result = json.loads(respone.text)["response"]
             print("result of inconsistentAbort: ", result)

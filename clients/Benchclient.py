@@ -14,17 +14,8 @@ def main():
     #         ]
     #     })
     # print("json = ", myJson)
-    # x = requests.post('http://localhost:8080/store/inconsistent/abort', data=myJson,  allow_redirects=False, headers=headers)
+    # x = requests.post('http://localhost:8080/store/inconsistent/commit', data=myJson,  allow_redirects=False, headers=headers)
     # print("text = ", x.text)
-
-    # x = requests.get('http://localhost:8081/users')
-    # print(x.text)
-
-    # try:
-    #     x = requests.get('http://localhost:8082/users')
-    #     print(x.text)
-    # except Exception as e:
-    #     print("Server error {}".format(e))
     
     duration = int(sys.argv[1])
     tlen = int(sys.argv[2])
