@@ -18,7 +18,7 @@ class BufferClient:
     
         promise = self.shardClient.Get(tId, closestReplica, key)
         if(promise.reply == REPLY.REPLY_OK):
-            self.transaction.addReadSet(key, promise.value) #value = timestamp
+            self.transaction.addReadSet(key, promise.value) #value = value  ??? mipws theli timestamed value?
         
     def Put(self, tId, key):
         self.transaction.addWriteSet(key, key)
@@ -29,8 +29,8 @@ class BufferClient:
         # print("PREPARE FUNCTION IN BUFFER CLIENT CLIENT WITH ID={} AND tId={}".format(self.shardClient.id, tId))
         return self.shardClient.Prepare(tId, timestamp = timestamp, txn = self.transaction)
 
-    def Commit(self, tId, key):
-        return self.shardClient.Commit(tId, key)
+    def Commit(self, tId):
+        return self.shardClient.Commit(tId, txn=self.transaction)
     
     def Abort(self, tId):
-        return self.shardClient.Abort(tId)
+        return self.shardClient.Abort(tId, txn=self.transaction)

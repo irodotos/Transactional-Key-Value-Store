@@ -4,18 +4,17 @@ from Client import *
 import requests 
 def main():
     # headers = {
-    #     "Content-Type": "application/json",
-    #     "Accept": "application/json"
+    #     "Content-Type": "application/json"
     # }
     # myJson = json.dumps({
     #         "txn": [
-    #             {"key": 1, "value": 100},
-    #             {"key": 2, "value": 200},
-    #             {"key": 2, "value": 300}
+    #             {"method": "get", "key": 1, "value": 100},
+    #             {"method": "get", "key": 2, "value": 200},
+    #             {"method": "post", "key": 2, "value": 300}
     #         ]
     #     })
     # print("json = ", myJson)
-    # x = requests.post('http://localhost:8080/store/consensus', data=myJson,  allow_redirects=False, headers=headers)
+    # x = requests.post('http://localhost:8080/store/inconsistent/abort', data=myJson,  allow_redirects=False, headers=headers)
     # print("text = ", x.text)
 
     # x = requests.get('http://localhost:8081/users')

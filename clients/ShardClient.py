@@ -40,13 +40,13 @@ class ShardClient:
         else:
             return Promise(REPLY.REPLY_FAIL , "NULL", datetime.now())
     
-    def Commit(self, tId: int, key: str, txn = None, timestamp = None):
+    def Commit(self, tId: int, txn: Transaction = None, timestamp = None):
         print("COMMIT FUNCTION IN SHARD CLIENT WITH ID={} AND tId={}".format(self.id, tId))
         # invokeInconsistent
         for serverIp in self.servers:
             result = self.invokeInconsistentCommit(serverIp, tId, txn = txn)
 
-    def Abort(self, tId: int, txn = None, timestamp = None):
+    def Abort(self, tId: int, txn: Transaction = None, timestamp = None):
         print("ABORT FUNCTION IN SHARD CLIENT WITH ID={} AND tId={}".format(self.id, tId))
         # invokeInconsistent
         for serverIp in self.servers:
@@ -88,13 +88,12 @@ class ShardClient:
     def invokeInconsistentCommit(self, serverIp, tId, txn: Transaction = None):
         try:
             headers = {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
+                "Content-Type": "application/json"
             }
             myData = json.dumps(txn.toJson())
             respone = requests.post(url=serverIp + '/store/inconsistent/commit', data=myData,  allow_redirects=False, headers=headers)
             result = json.loads(respone.text)["response"]
-            print("result of inconsistent: ", result)
+            print("result of inconsistentCommit: ", result)
             return result
         except Exception as e:  
             print("Server error {}".format(e))
@@ -103,13 +102,12 @@ class ShardClient:
     def invokeInconsistentAbort(self, serverIp, tId, txn: Transaction = None):
         try:
             headers = {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
+                "Content-Type": "application/json"
             }
             myData = json.dumps(txn.toJson())
             respone = requests.post(url=serverIp + '/store/inconsistent/abort', data=myData,  allow_redirects=False, headers=headers)
             result = json.loads(respone.text)["response"]
-            print("result of inconsistent: ", result)
+            print("result of inconsistentAbort: ", result)
             return result
         except Exception as e:  
             print("Server error {}".format(e))

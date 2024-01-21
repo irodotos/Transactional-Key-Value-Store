@@ -4,7 +4,7 @@ class Transaction:
 
     def __init__(self, tId):
         self.tId = tId
-        self.readSet = {}  # key: timestamp (int, date)
+        self.readSet = {}  # key: value (int, int) ?? mipws theli timestamed value? (int, datetime)
         self.writeSet = {} # key: value (int, int)
 
     def addReadSet(self, key, timestamp):
@@ -22,10 +22,10 @@ class Transaction:
     def toJson(self):
         list = []
         txn = {}
-        for key in self.writeSet:
-            list.append({"method": "post", "key":key, "value":self.getWriteSet(key)})
         for key in self.readSet:
             list.append({"method": "get", "key":key, "value":self.getReadSet(key)})
+        for key in self.writeSet:
+            list.append({"method": "post", "key":key, "value":self.getWriteSet(key)})
         txn["txn"] = list
         print("txn = ", txn)
         return txn

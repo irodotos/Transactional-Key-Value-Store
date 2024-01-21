@@ -53,7 +53,7 @@ class Client:
         if status == REPLY.REPLY_OK:
             print("COMMIT [{}]".format(self.tId))
             for p in self.participants:
-                self.bufferClients[p].Commit(self.tId, timestamp) #timestamp = 0 ??
+                self.bufferClients[p].Commit(self.tId) #timestamp = 0 ??
             return True
 
         # 4. If not, send abort to all shards.

@@ -28,9 +28,9 @@ class UserRoutes(userRegistry: ActorRef[UserRegistry.Command])(implicit val syst
     userRegistry.ask(CreatePair(key, pair, _))
   private def invokeConsensus(txn: Txn): Future[GetConsensusResponse] =
     userRegistry.ask(InvokeConsensus(txn, _))
-  private def invokeInconsistenCommit(txn: Txn): Future[Unit] =
+  private def invokeInconsistenCommit(txn: Txn): Future[String] =
     userRegistry.ask(InvokeInconsistenCommit(txn, _))
-  private def invokeInconsistenAbort(txn: Txn): Future[Unit] =
+  private def invokeInconsistenAbort(txn: Txn): Future[String] =
     userRegistry.ask(InvokeInconsistenAbort(txn, _))
 
   val userRoutes: Route =
@@ -53,27 +53,27 @@ class UserRoutes(userRegistry: ActorRef[UserRegistry.Command])(implicit val syst
                 }
               }
             }
+        },
+        path("inconsistent" / "commit"){
+          post {
+            entity(as[Txn]) { txn =>
+              onComplete(invokeInconsistenCommit(txn)){
+                case Success(res) => complete(res)
+                case Failure(ex)  => complete(StatusCodes.InternalServerError)
+              }
+            }
+          }
+        },
+        path("inconsistent" / "abort"){
+          post {
+            entity(as[Txn]) { txn =>
+              onComplete(invokeInconsistenAbort(txn)){
+                case Success(res) => complete(res)
+                case Failure(ex)  => complete(StatusCodes.InternalServerError)
+              }
+            }
+          }
         }
-//        path("inconsistent/commit"){
-//          post {
-//            entity(as[Txn]) { txn =>
-//              onComplete(invokeInconsistenCommit(txn)){
-//                case Success(res) => complete(res)
-//                case Failure(ex)  => complete(StatusCodes.InternalServerError)
-//              }
-//            }
-//          }
-//        },
-//        path("inconsistent/abort"){
-//          post {
-//            entity(as[Txn]) { txn =>
-//              onComplete(invokeInconsistenAbort(txn)){
-//                case Success(res) => complete(res)
-//                case Failure(ex)  => complete(StatusCodes.InternalServerError)
-//              }
-//            }
-//          }
-//        }
       )
     }
 }
