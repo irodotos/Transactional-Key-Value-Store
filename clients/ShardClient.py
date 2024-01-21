@@ -99,7 +99,8 @@ class ShardClient:
             print("result of inconsistentCommit: ", result)
             return result
         except Exception as e:  
-            print("Server error {}".format(e))
+            # print("Server error {}".format(e))
+            print("Commit")
             return False
     
     def invokeInconsistentAbort(self, serverIp, tId, txn: Transaction = None):
@@ -108,13 +109,13 @@ class ShardClient:
                 "Content-Type": "application/json"
             }
             myData = json.dumps(txn.toJson())
-            print("myData = ", myData)
             respone = requests.post(url=serverIp + '/store/inconsistent/abort', data=myData,  allow_redirects=False, headers=headers)
             result = json.loads(respone.text)["response"]
             print("result of inconsistentAbort: ", result)
             return result
         except Exception as e:  
-            print("Server error {}".format(e))
+            # print("Server error {}".format(e))
+            print("Abort")
             return False
 
 def readConfigFile(id: int):

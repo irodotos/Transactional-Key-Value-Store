@@ -23,7 +23,6 @@ class Client:
     
     def Put(self, key: int):
         i = keyToShard(key,self.nShards)
-        # mpori na thel kati prin kanw begin 
         if i not in self.participants:
             self.participants.append(i)      
             self.bufferClients[i].Begin(self.tId)
@@ -33,7 +32,6 @@ class Client:
 
     def Get(self, key: int):
         i = keyToShard(key,self.nShards)
-        # mpori na theli kati prin kanw begin
         if i not in self.participants:
             self.participants.append(i)
             self.bufferClients[i].Begin(self.tId)
@@ -53,7 +51,7 @@ class Client:
         if status == REPLY.REPLY_OK:
             print("COMMIT [{}]".format(self.tId))
             for p in self.participants:
-                self.bufferClients[p].Commit(self.tId) #timestamp = 0 ??
+                self.bufferClients[p].Commit(self.tId) 
             return True
 
         # 4. If not, send abort to all shards.
@@ -69,7 +67,7 @@ class Client:
         assert len(self.participants) > 0, "Participants size must be greater than 0"
 
         for p in self.participants:
-            promises.append(self.bufferClients[p].Prepare(self.tId, timestamp))  #pithanon lathos edw
+            promises.append(self.bufferClients[p].Prepare(self.tId, timestamp))  
 
         status = REPLY.REPLY_OK 
         #  3. If all votes YES, send commit to all shards.
@@ -82,26 +80,8 @@ class Client:
             elif p.reply == REPLY.REPLY_FAIL:
                 print("PREPARE [{}] ABORT".format(self.tId))
                 return REPLY.REPLY_FAIL
-            elif p.reply == REPLY.REPLY_RETRY:
-                status = REPLY.REPLY_RETRY
-                if proposed > timestamp:
-                    timestamp = proposed
-                break
-            elif p.reply == REPLY.REPLY_TIMEOUT:
-                status = REPLY.REPLY_RETRY
-                break
-            elif p.reply == REPLY.REPLY_ABSTAIN:
-                continue
             else:
                 continue
-        
-        if status == REPLY.REPLY_RETRY:
-            now = datetime.now()
-            if now > proposed:
-                timestamp = now
-            else:
-                timestamp = proposed
-            print("RETRY [{}] at [{}]".format(self.tId, timestamp))
 
         print("all PREPARE's [{}] received".format(self.tId))
         return status

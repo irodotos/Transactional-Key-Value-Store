@@ -18,7 +18,7 @@ class BufferClient:
     
         promise = self.shardClient.Get(tId, closestReplica, key)
         if(promise.reply == REPLY.REPLY_OK):
-            self.transaction.addReadSet(key, promise.value) #value = value  ??? mipws theli timestamed value?
+            self.transaction.addReadSet(key, promise.value) 
         
     def Put(self, tId, key):
         self.transaction.addWriteSet(key, key)
